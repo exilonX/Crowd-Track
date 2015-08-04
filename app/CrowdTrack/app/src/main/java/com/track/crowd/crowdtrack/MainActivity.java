@@ -2,6 +2,7 @@ package com.track.crowd.crowdtrack;
 
 import java.util.Locale;
 
+import android.location.Location;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -18,8 +19,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
-public class MainActivity extends ActionBarActivity {
+
+
+public class MainActivity extends ActionBarActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -31,10 +37,17 @@ public class MainActivity extends ActionBarActivity {
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
 
+    // Location specific
+    GoogleApiClient mGoogleApiClient;
+    Location mLastLocation;
+
+
     /**
      * The {@link ViewPager} that will host the section contents.
      */
     ViewPager mViewPager;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +63,15 @@ public class MainActivity extends ActionBarActivity {
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
-    }
 
+        // Get last known location
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -74,6 +94,8 @@ public class MainActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+
 
 
     /**
@@ -144,9 +166,44 @@ public class MainActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             TextView text = (TextView)rootView.findViewById(R.id.section_label);
-            text.setText("This is fragment" + getArguments().getInt(ARG_SECTION_NUMBER));
+            MainActivity activity = (MainActivity)getActivity();
+            if (activity.mLastLocation != null) {
+                text.setText("This is fragment" + getArguments().getInt(ARG_SECTION_NUMBER) + " \n" +
+                        activity.mLastLocation.getLatitude() + " longitude " + activity.mLastLocation.getLongitude());
+            } else {
+                text.setText("This is fragment" + getArguments().getInt(ARG_SECTION_NUMBER));
+            }
+
             return rootView;
         }
+    }
+
+    /**
+     * CoannectionCallbacks functions to implement
+     */
+
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+
+    /**
+     * OnConnectionFailedListener functions to implement
+     */
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 
 }
